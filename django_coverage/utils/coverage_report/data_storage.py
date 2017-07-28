@@ -14,7 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import coverage, time
+
+import time
 
 try:
     set
@@ -24,16 +25,16 @@ except:
 
 class ModuleVars(object):
     modules = dict()
-    def __new__(cls, module_name, module=None):
+    def __new__(cls, module_name, module=None, coverage=None):
         if cls.modules.get(module_name, None):
             return cls.modules.get(module_name)
         else:
             obj=super(ModuleVars, cls).__new__(cls)
-            obj._init(module_name, module)
+            obj._init(module_name, module, coverage)
             cls.modules[module_name] = obj
             return obj
 
-    def _init(self, module_name, module):
+    def _init(self, module_name, module, coverage):
         source_file, stmts, excluded, missed, missed_display = coverage.analysis2(module)
         executed = list(set(stmts).difference(missed))
         total = list(set(stmts).union(excluded))
@@ -52,6 +53,5 @@ class ModuleVars(object):
         if percent_covered < 75: severity = 'warning'
         if percent_covered < 50: severity = 'critical'
 
-        for k, v in locals().items():
+        for k, v in locals().iteritems():
             setattr(self, k, v)
-

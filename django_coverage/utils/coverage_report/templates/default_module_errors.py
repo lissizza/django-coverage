@@ -14,9 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from django_coverage.utils.coverage_report.templates.default_module_exceptions import *
+from default_module_exceptions import *
 
 title = "error packages and modules"
 
 TOP = TOP %vars()
 CONTENT_HEADER = CONTENT_HEADER %vars()
+

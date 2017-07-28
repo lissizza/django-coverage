@@ -62,6 +62,8 @@ COVERAGE_MODULE_EXCLUDES = getattr(settings, 'COVERAGE_MODULE_EXCLUDES',
                                     'common.views.test', '__init__', 'django',
                                     'migrations'])
 
+# Wether to do branch coverage as well (http://nedbatchelder.com/code/coverage/branch.html)
+COVERAGE_COVER_BRANCHES = getattr(settings, 'COVERAGE_COVER_BRANCHES', False)
 
 # Specify the directory where you would like the coverage report to create
 # the HTML files.
@@ -76,7 +78,9 @@ COVERAGE_REPORT_HTML_OUTPUT_DIR = getattr(settings,
 
 # True => html reports by 55minutes
 # False => html reports by coverage.py
-COVERAGE_CUSTOM_REPORTS = getattr(settings, 'COVERAGE_CUSTOM_REPORTS', True)
+#COVERAGE_CUSTOM_REPORTS = getattr(settings, 'COVERAGE_CUSTOM_REPORTS', True)
+# (ignored when COVERAGE_COVER_BRANCHES is enabled)
+COVERAGE_CUSTOM_REPORTS = getattr(settings, 'COVERAGE_CUSTOM_REPORTS', True) and not COVERAGE_COVER_BRANCHES
 
 
 # True => Always output coverage reports to STDOUT.

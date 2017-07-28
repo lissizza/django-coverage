@@ -15,19 +15,16 @@ limitations under the License.
 """
 
 import os, time
-try:
-    from urllib import pathname2url as p2url
-except ImportError:
-    from urllib.request import pathname2url as p2url
+from urllib import pathname2url as p2url
 
-from django_coverage.utils.coverage_report.data_storage import ModuleVars
-from django_coverage.utils.coverage_report.html_module_detail import html_module_detail
-from django_coverage.utils.coverage_report.html_module_errors import html_module_errors
-from django_coverage.utils.coverage_report.html_module_excludes import html_module_excludes
-from django_coverage.utils.coverage_report.templates import default_module_index as module_index
+from data_storage import ModuleVars
+from html_module_detail import html_module_detail
+from html_module_errors import html_module_errors
+from html_module_excludes import html_module_excludes
+from templates import default_module_index as module_index
 from django_coverage import settings
 
-def html_report(outdir, modules, excludes=None, errors=None):
+def html_report(coverage, outdir, modules, excludes=None, errors=None):
     """
     Creates an ``index.html`` in the specified ``outdir``. Also attempts to create
     a ``modules`` subdirectory to create module detail html pages, which are named
@@ -87,10 +84,10 @@ def html_report(outdir, modules, excludes=None, errors=None):
     total_excluded = 0
     total_stmts = 0
     module_stats = list()
-    m_names = list(modules.keys())
+    m_names = modules.keys()
     m_names.sort()
     for n in m_names:
-        m_vars = ModuleVars(n, modules[n])
+        m_vars = ModuleVars(n, modules[n], coverage)
         if not m_vars.total_count:
             excludes.append(m_vars.module_name)
             del modules[n]
@@ -107,41 +104,41 @@ def html_report(outdir, modules, excludes=None, errors=None):
     else:
         overall_covered = 0.0
 
-    m_names = list(modules.keys())
+    m_names = modules.keys()
     m_names.sort()
     i = 0
     for i, n in enumerate(m_names):
-        m_vars = ModuleVars(n)
+        m_vars = ModuleVars(n, coverage)
         nav = dict(up_link=p2url(os.path.join('..', 'index.html')),
                    up_label='index')
         if i > 0:
-            m = ModuleVars(m_names[i-1])
+            m = ModuleVars(m_names[i-1], coverage)
             nav['prev_link'] = os.path.basename(m.module_link)
             nav['prev_label'] = m.module_name
         if i+1 < len(modules):
-            m = ModuleVars(m_names[i+1])
+            m = ModuleVars(m_names[i+1], coverage)
             nav['next_link'] = os.path.basename(m.module_link)
             nav['next_label'] = m.module_name
         html_module_detail(
             os.path.join(m_dir, m_vars.module_name + '.html'), n, nav)
 
-    fo = open(os.path.join(outdir, 'index.html'), 'w+')
-    fo.write(module_index.TOP)
-    fo.write(module_index.CONTENT_HEADER %vars())
-    fo.write(module_index.CONTENT_BODY %vars())
+    fo = file(os.path.join(outdir, 'index.html'), 'wb+')
+    print >>fo, module_index.TOP
+    print >>fo, module_index.CONTENT_HEADER %vars()
+    print >>fo, module_index.CONTENT_BODY %vars()
     if excludes:
         _file = 'excludes.html'
         exceptions_link = _file
         exception_desc = "Excluded packages and modules"
-        fo.write(module_index.EXCEPTIONS_LINK %vars())
+        print >>fo, module_index.EXCEPTIONS_LINK %vars()
         html_module_excludes(os.path.join(outdir, _file), excludes)
     if errors:
         _file = 'errors.html'
         exceptions_link = _file
         exception_desc = "Error packages and modules"
-        fo.write(module_index.EXCEPTIONS_LINK %vars())
+        print >>fo, module_index.EXCEPTIONS_LINK %vars()
         html_module_errors(os.path.join(outdir, _file), errors)
-    fo.write(module_index.BOTTOM)
+    print >>fo, module_index.BOTTOM
     fo.close()
 
     if settings.COVERAGE_BADGE_TYPE:
@@ -150,5 +147,5 @@ def html_report(outdir, modules, excludes=None, errors=None):
             'badges',
             settings.COVERAGE_BADGE_TYPE,
             '%s.png' % int(overall_covered)
-        ), 'rb').read()
+        )).read()
         open(os.path.join(outdir, 'coverage_status.png'), 'wb').write(badge)
